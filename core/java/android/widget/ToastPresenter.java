@@ -238,7 +238,7 @@ public class ToastPresenter {
             try {
                 icon = pm.getApplicationIcon(mPackageName);
             } catch (PackageManager.NameNotFoundException e) {
-                // nothing to do
+                appIcon.setVisibility(View.GONE);
             }
             appIcon.setImageDrawable(icon);
         }
