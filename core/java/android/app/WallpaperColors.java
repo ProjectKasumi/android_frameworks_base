@@ -552,15 +552,15 @@ public final class WallpaperColors implements Parcelable {
         float[] tmpHsl = new float[3];
         for (int i = 0; i < pixels.length; i++) {
             int pixelColor = pixels[i];
-            ColorUtils.colorToHSL(pixelColor, tmpHsl);
             final int alpha = Color.alpha(pixelColor);
 
             // Apply composite colors where the foreground is a black layer with an alpha value of
             // the dim amount and the background is the wallpaper pixel color.
             int compositeColors = ColorUtils.compositeColors(blackTransparent, pixelColor);
 
-            // Calculate the adjusted luminance of the dimmed wallpaper pixel color.
-            double adjustedLuminance = ColorUtils.calculateLuminance(compositeColors);
+            // Calculate the luminance of the dimmed wallpaper pixel color.
+            ColorUtils.colorToHSL(compositeColors, tmpHsl);
+            double luminance = tmpHsl[2];
 
             // Make sure we don't have a dark pixel mass that will
             // make text illegible.
@@ -572,7 +572,7 @@ public final class WallpaperColors implements Parcelable {
                     pixels[i] = Color.RED;
                 }
             }
-            totalLuminance += adjustedLuminance;
+            totalLuminance += luminance;
         }
 
         int hints = 0;
