@@ -30,6 +30,7 @@ public class PixelPropsUtils {
     private static final boolean DEBUG = false;
 
     private static volatile boolean sIsGms = false;
+    private static volatile boolean sIsFinsky = false;
 
     private static final Map<String, Object> propsToChange;
     private static final Map<String, Object> propsToChangePixelXL;
@@ -120,6 +121,9 @@ public class PixelPropsUtils {
         if(packageName.equals("com.google.android.gms")) {
             sIsGms = true;
         }
+        if(packageName.equals("com.android.vending")) {
+            sIsFinsky = true;
+        }
         if (Arrays.asList(packagesToChange).contains(packageName)){
             if (DEBUG){
                 Log.d(TAG, "Defining props for: " + packageName);
@@ -182,6 +186,11 @@ public class PixelPropsUtils {
     public static void onEngineGetCertificateChain() {
         // Check stack for SafetyNet
         if (sIsGms && isCallerSafetyNet()) {
+            throw new UnsupportedOperationException();
+        }
+
+        // Check stack for Play Integrity
+        if (sIsFinsky) {
             throw new UnsupportedOperationException();
         }
     }
