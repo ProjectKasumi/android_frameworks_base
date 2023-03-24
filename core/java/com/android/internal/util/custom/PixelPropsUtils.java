@@ -136,7 +136,9 @@ public class PixelPropsUtils {
     }
 
     public static void setProps(String packageName) {
-        if (packageName == null) {
+        propsToChangeGeneric.forEach((k, v) -> setPropValue(k, v));
+
+        if (packageName == null || packageName.isEmpty()) {
             return;
         }
         if (Arrays.asList(packagesToKeep).contains(packageName)) {
@@ -150,7 +152,6 @@ public class PixelPropsUtils {
                 || Arrays.asList(extraPackagesToChange).contains(packageName)) {
 
             Map<String, Object> propsToChange = new HashMap<>();
-            propsToChange.putAll(propsToChangeGeneric);
 
             boolean isPixelDevice = Arrays.asList(pixelCodenames).contains(SystemProperties.get(DEVICE));
 
