@@ -26,10 +26,12 @@ import com.android.internal.jank.InteractionJankMonitor;
 import com.android.internal.statusbar.IStatusBarService;
 import com.android.systemui.animation.ActivityLaunchAnimator;
 import com.android.systemui.animation.DialogLaunchAnimator;
+import com.android.systemui.colorextraction.SysuiColorExtractor;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Main;
+import com.android.systemui.dump.DumpHandler;
 import com.android.systemui.dump.DumpManager;
-import com.android.systemui.media.MediaDataManager;
+import com.android.systemui.media.controls.pipeline.MediaDataManager;
 import com.android.systemui.plugins.ActivityStarter;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.qs.carrier.QSCarrierGroupController;
@@ -68,6 +70,7 @@ import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.policy.RemoteInputUriController;
 import com.android.systemui.statusbar.window.StatusBarWindowController;
 import com.android.systemui.tracing.ProtoTracer;
+import com.android.systemui.tuner.TunerService;
 import com.android.systemui.util.concurrency.DelayableExecutor;
 import com.android.systemui.util.time.SystemClock;
 
@@ -101,7 +104,8 @@ public interface CentralSurfacesDependenciesModule {
             RemoteInputUriController remoteInputUriController,
             NotificationClickNotifier clickNotifier,
             ActionClickLogger actionClickLogger,
-            DumpManager dumpManager) {
+            DumpManager dumpManager,
+            TunerService tunerService) {
         return new NotificationRemoteInputManager(
                 context,
                 notifPipelineFlags,
@@ -130,7 +134,11 @@ public interface CentralSurfacesDependenciesModule {
             NotifCollection notifCollection,
             @Main DelayableExecutor mainExecutor,
             MediaDataManager mediaDataManager,
-            DumpManager dumpManager) {
+            StatusBarStateController statusBarStateController,
+            SysuiColorExtractor colorExtractor,
+            KeyguardStateController keyguardStateController,
+            DumpManager dumpManager,
+            TunerService tunerService) {
         return new NotificationMediaManager(
                 context,
                 centralSurfacesOptionalLazy,
@@ -142,7 +150,11 @@ public interface CentralSurfacesDependenciesModule {
                 notifCollection,
                 mainExecutor,
                 mediaDataManager,
-                dumpManager);
+                statusBarStateController,
+                colorExtractor,
+                keyguardStateController,
+                dumpManager,
+                tunerService);
     }
 
     /** */
@@ -174,8 +186,10 @@ public interface CentralSurfacesDependenciesModule {
     static CommandQueue provideCommandQueue(
             Context context,
             ProtoTracer protoTracer,
-            CommandRegistry registry) {
-        return new CommandQueue(context, protoTracer, registry);
+            CommandRegistry registry,
+            DumpHandler dumpHandler
+    ) {
+        return new CommandQueue(context, protoTracer, registry, dumpHandler);
     }
 
     /**
@@ -290,7 +304,7 @@ public interface CentralSurfacesDependenciesModule {
 
             @Override
             public boolean isShowingAlternateAuthOnUnlock() {
-                return statusBarKeyguardViewManager.get().shouldShowAltAuth();
+                return statusBarKeyguardViewManager.get().canShowAlternateBouncer();
             }
         };
         return new DialogLaunchAnimator(callback, interactionJankMonitor);

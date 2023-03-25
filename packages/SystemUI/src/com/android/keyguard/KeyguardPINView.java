@@ -59,9 +59,11 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
     private int mYTransOffset;
     private View mBouncerMessageView;
     @DevicePostureInt private int mLastDevicePosture = DEVICE_POSTURE_UNKNOWN;
+    public static final long ANIMATION_DURATION = 650;
     private boolean mScramblePin;
 
     private List<Integer> mNumbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 0);
+    private final List<Integer> mDefaultNumbers = List.of(mNumbers.toArray(new Integer[0]));
 
     public KeyguardPINView(Context context) {
         this(context, null);
@@ -177,11 +179,19 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
                 new View[]{
                         null, mEcaView, null
                 }};
+        updatePinScrambling();
+    }
 
-        mScramblePin = LineageSettings.System.getInt(getContext().getContentResolver(),
+    private void updatePinScrambling() {
+        final boolean scramblePin = LineageSettings.System.getInt(getContext().getContentResolver(),
                 LineageSettings.System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT, 0) == 1;
-        if (mScramblePin) {
-            Collections.shuffle(mNumbers);
+        if (scramblePin || scramblePin != mScramblePin) {
+            mScramblePin = scramblePin;
+            if (scramblePin) {
+                Collections.shuffle(mNumbers);
+            } else {
+                mNumbers = new ArrayList<>(mDefaultNumbers);
+            }
             // get all children who are NumPadKeys
             List<NumPadKey> views = new ArrayList<>();
 
@@ -211,10 +221,13 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
 
     @Override
     public void startAppearAnimation() {
+        updatePinScrambling();
+        setAlpha(1f);
+        setTranslationY(0);
         if (mAppearAnimator.isRunning()) {
             mAppearAnimator.cancel();
         }
-        mAppearAnimator.setDuration(650);
+        mAppearAnimator.setDuration(ANIMATION_DURATION);
         mAppearAnimator.addUpdateListener(animation -> animate(animation.getAnimatedFraction()));
         mAppearAnimator.start();
     }

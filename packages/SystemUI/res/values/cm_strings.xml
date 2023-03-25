@@ -18,6 +18,9 @@
  */
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Status bar - icons -->
+    <string name="status_bar_icons_title">Status bar icons</string>
+
     <!-- Name of the clock in status bar [CHAR LIMIT=30] -->
     <string name="clock">Clock</string>
 
@@ -49,6 +52,9 @@
     <!-- Label for current user in power menu options dialog -->
     <string name="global_action_current_user">Current</string>
     <string name="global_action_users">Users</string>
+
+    <!-- Label for area where tiles can be added to the qs panel -->
+    <string name="drag_or_tap_to_add_tiles">Hold &amp; drag or tap to add tiles</string>
 
     <!-- Custom QS tiles -->
     <!-- Ambient display QS tile -->
@@ -111,4 +117,8 @@
     <string name="screenshot_delete_label">Delete</string>
     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
     <string name="screenshot_delete_description">Delete screenshot</string>
+
+    <!-- Name of the firewall status bar icon. -->
+    <string name="status_bar_firewall">Firewall</string>
+    <string name="status_bar_firewall_slot" translatable="false">firewall</string>
 </resources>
