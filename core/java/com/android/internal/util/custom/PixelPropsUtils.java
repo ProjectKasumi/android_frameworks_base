@@ -82,10 +82,10 @@ public class PixelPropsUtils {
         propsToChange.put("IS_USERDEBUG", false);
         propsToChange.put("IS_USER", true);
         propsToChange.put("TYPE", "user");
-        propsToChange.put("DEVICE", "raven");
-        propsToChange.put("PRODUCT", "raven");
-        propsToChange.put("MODEL", "Pixel 6 Pro");
-        propsToChange.put("FINGERPRINT", "google/raven/raven:12/SQ3A.220705.003/8671607:user/release-keys");
+        propsToChange.put("DEVICE", "cheetah");
+        propsToChange.put("PRODUCT", "cheetah");
+        propsToChange.put("MODEL", "Pixel 7 Pro");
+        propsToChange.put("FINGERPRINT", "google/cheetah/cheetah:13/TQ3A.230605.012/10204971:user/release-keys");
         propsToChangePixelXL = new HashMap<>();
         propsToChangePixelXL.put("BRAND", "google");
         propsToChangePixelXL.put("MANUFACTURER", "Google");
