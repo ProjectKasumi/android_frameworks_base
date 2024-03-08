@@ -102,6 +102,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
 import android.app.RemoteInput;
+import android.app.RemoteInputHistoryItem;
 import android.app.StatsManager;
 import android.app.admin.DevicePolicyManagerInternal;
 import android.app.usage.UsageStatsManagerInternal;
@@ -4312,6 +4313,12 @@ public class NotificationManagerServiceTest extends UiServiceTestCase {
                 .setName("People List Person 2")
                 .setIcon(personIcon3)
                 .build();
+        final Uri historyUri1 = Uri.parse("content://com.example/history1");
+        final Uri historyUri2 = Uri.parse("content://com.example/history2");
+        final RemoteInputHistoryItem historyItem1 = new RemoteInputHistoryItem(null, historyUri1,
+                "a");
+        final RemoteInputHistoryItem historyItem2 = new RemoteInputHistoryItem(null, historyUri2,
+                "b");
 
         Bundle extras = new Bundle();
         extras.putParcelable(Notification.EXTRA_AUDIO_CONTENTS_URI, audioContents);
@@ -4319,6 +4326,8 @@ public class NotificationManagerServiceTest extends UiServiceTestCase {
         extras.putParcelable(Notification.EXTRA_MESSAGING_PERSON, person1);
         extras.putParcelableArrayList(Notification.EXTRA_PEOPLE_LIST,
                 new ArrayList<>(Arrays.asList(person2, person3)));
+        extras.putParcelableArray(Notification.EXTRA_REMOTE_INPUT_HISTORY_ITEMS,
+                new RemoteInputHistoryItem[]{historyItem1, historyItem2});
 
         Notification n = new Notification.Builder(mContext, "a")
                 .setContentTitle("notification with uris")
@@ -4326,6 +4335,13 @@ public class NotificationManagerServiceTest extends UiServiceTestCase {
                 .setLargeIcon(largeIcon)
                 .addExtras(extras)
                 .build();
+
+        // Serialize and deserialize the notification to make sure nothing breaks in the process,
+        // since that's what will usually happen before we get to call visitUris.
+        Parcel parcel = Parcel.obtain();
+        n.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        n = new Notification(parcel);
 
         Consumer<Uri> visitor = (Consumer<Uri>) spy(Consumer.class);
         n.visitUris(visitor);
@@ -4336,6 +4352,8 @@ public class NotificationManagerServiceTest extends UiServiceTestCase {
         verify(visitor, times(1)).accept(eq(personIcon1.getUri()));
         verify(visitor, times(1)).accept(eq(personIcon2.getUri()));
         verify(visitor, times(1)).accept(eq(personIcon3.getUri()));
+        verify(visitor, times(1)).accept(eq(historyUri1));
+        verify(visitor, times(1)).accept(eq(historyUri2));
     }
 
     @Test
@@ -4400,6 +4418,60 @@ public class NotificationManagerServiceTest extends UiServiceTestCase {
         verify(visitor, times(1)).accept(eq(personIcon1.getUri()));
         verify(visitor, times(1)).accept(eq(personIcon2.getUri()));
         verify(visitor, times(1)).accept(eq(personIcon3.getUri()));
+    }
+
+    @Test
+    public void testVisitUris_styleExtrasWithoutStyle() {
+        Notification notification = new Notification.Builder(mContext, "a")
+                .setSmallIcon(android.R.drawable.sym_def_app_icon)
+                .build();
+
+        Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle(
+                personWithIcon("content://user"))
+                .addHistoricMessage(new Notification.MessagingStyle.Message("Heyhey!",
+                                System.currentTimeMillis(),
+                                personWithIcon("content://historicalMessenger")))
+                .addMessage(new Notification.MessagingStyle.Message("Are you there",
+                                System.currentTimeMillis(),
+                                personWithIcon("content://messenger")))
+                        .setShortcutIcon(
+                                Icon.createWithContentUri("content://conversationShortcut"));
+        messagingStyle.addExtras(notification.extras); // Instead of Builder.setStyle(style).
+
+        Consumer<Uri> visitor = (Consumer<Uri>) spy(Consumer.class);
+        notification.visitUris(visitor);
+
+        verify(visitor).accept(eq(Uri.parse("content://user")));
+        verify(visitor).accept(eq(Uri.parse("content://historicalMessenger")));
+        verify(visitor).accept(eq(Uri.parse("content://messenger")));
+        verify(visitor).accept(eq(Uri.parse("content://conversationShortcut")));
+    }
+
+    private static Person personWithIcon(String iconUri) {
+        return new Person.Builder()
+                .setName("Mr " + iconUri)
+                .setIcon(Icon.createWithContentUri(iconUri))
+                .build();
+    }
+
+    @Test
+    public void testVisitUris_wearableExtender() {
+        Icon actionIcon = Icon.createWithContentUri("content://media/action");
+        Icon wearActionIcon = Icon.createWithContentUri("content://media/wearAction");
+        PendingIntent intent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
+        Notification n = new Notification.Builder(mContext, "a")
+                .setSmallIcon(android.R.drawable.sym_def_app_icon)
+                .addAction(new Notification.Action.Builder(actionIcon, "Hey!", intent).build())
+                .extend(new Notification.WearableExtender().addAction(
+                        new Notification.Action.Builder(wearActionIcon, "Wear!", intent).build()))
+                .build();
+
+        Consumer<Uri> visitor = (Consumer<Uri>) spy(Consumer.class);
+        n.visitUris(visitor);
+
+        verify(visitor).accept(eq(actionIcon.getUri()));
+        verify(visitor).accept(eq(wearActionIcon.getUri()));
     }
 
     @Test
